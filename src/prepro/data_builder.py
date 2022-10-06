@@ -210,9 +210,9 @@ class BertData():
         self.args = args
         self.tokenizer = AutoTokenizer.from_pretrained('vinai/phobert-base')
 
-        self.sep_token = '[SEP]'
-        self.cls_token = '[CLS]'
-        self.pad_token = '[PAD]'
+        self.sep_token = '</s>'
+        self.cls_token = '<s>'
+        self.pad_token = '<pad>'
         self.tgt_bos = '[unused0]'
         self.tgt_eos = '[unused1]'
         self.tgt_sent_split = '[unused2]'
