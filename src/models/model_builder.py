@@ -2,19 +2,19 @@ import copy
 
 import torch
 import torch.nn as nn
-from transformers import BertConfig, BertModel, DistilBertConfig, DistilBertModel
+from transformers import BertConfig, BertModel, DistilBertConfig, DistilBertModel, AutoModel
 from torch.nn.init import xavier_uniform_
 
 from models.decoder import TransformerDecoder
 from models.encoder import Classifier, ExtTransformerEncoder
 from models.optimizers import Optimizer
 
-### START MODIFYING ###
-import sys
-# Add MobileBert_PyTorch
-sys.path.insert(1, '../../MobileBert_PyTorch')
-from model.modeling_mobilebert import MobileBertConfig, MobileBertModel
-### END MODIFYING ###
+# ### START MODIFYING ###
+# import sys
+# # Add MobileBert_PyTorch
+# sys.path.insert(1, '../../MobileBert_PyTorch')
+# from model.modeling_mobilebert import MobileBertConfig, MobileBertModel
+# ### END MODIFYING ###
 
 def build_optim(args, model, checkpoint):
     """ Build optimizer """
@@ -129,8 +129,8 @@ class Bert(nn.Module):
         ### Start Modifying ###
         elif other_bert == 'distilbert':
             self.model = DistilBertModel.from_pretrained('distilbert-base-uncased', cache_dir=temp_dir)
-        elif other_bert == 'mobilebert':
-            self.model = MobileBertModel.from_pretrained('../../MobileBert_PyTorch/prev_trained_model/mobilebert')
+        elif other_bert == 'phobert':
+            self.model = AutoModel.from_pretrained('vinai/phobert-base',cache_dir=temp_dir)
         ### End Modifying ###
 
         else:
