@@ -15,7 +15,7 @@ from multiprocess import Pool
 
 from others.logging import logger
 from others.tokenization import BertTokenizer
-from transformers import AutoTokenizer
+#from transformers import AutoTokenizer
 from pytorch_transformers import XLNetTokenizer
 
 from others.utils import clean
@@ -208,11 +208,11 @@ def hashhex(s):
 class BertData():
     def __init__(self, args):
         self.args = args
-        self.tokenizer = AutoTokenizer.from_pretrained('vinai/phobert-base')
+        self.tokenizer = BertTokenizer.from_pretrained('vinai/phobert-base')
 
-        self.sep_token = '</s>'
-        self.cls_token = '<s>'
-        self.pad_token = '<pad>'
+        self.sep_token = '[SEP]'
+        self.cls_token = '[CLS]'
+        self.pad_token = '[PAD]'
         self.tgt_bos = '[unused0]'
         self.tgt_eos = '[unused1]'
         self.tgt_sent_split = '[unused2]'

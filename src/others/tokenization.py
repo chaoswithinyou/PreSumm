@@ -34,6 +34,7 @@ PRETRAINED_VOCAB_ARCHIVE_MAP = {
     'bert-base-multilingual-uncased': "https://s3.amazonaws.com/models.huggingface.co/bert/bert-base-multilingual-uncased-vocab.txt",
     'bert-base-multilingual-cased': "https://s3.amazonaws.com/models.huggingface.co/bert/bert-base-multilingual-cased-vocab.txt",
     'bert-base-chinese': "https://s3.amazonaws.com/models.huggingface.co/bert/bert-base-chinese-vocab.txt",
+    'vinai/phobert-base': "https://huggingface.co/vinai/phobert-base/raw/main/vocab.txt"
 }
 PRETRAINED_VOCAB_POSITIONAL_EMBEDDINGS_SIZE_MAP = {
     'bert-base-uncased': 512,
@@ -43,6 +44,7 @@ PRETRAINED_VOCAB_POSITIONAL_EMBEDDINGS_SIZE_MAP = {
     'bert-base-multilingual-uncased': 512,
     'bert-base-multilingual-cased': 512,
     'bert-base-chinese': 512,
+    'vinai/phobert-base': 512,
 }
 VOCAB_NAME = 'vocab.txt'
 
@@ -60,6 +62,32 @@ def load_vocab(vocab_file):
             vocab[token] = index
             index += 1
     return vocab
+
+##### lam
+def load_vocab2(vocab_file):
+    """Loads a vocabulary file into a dictionary."""
+    vocab = collections.OrderedDict()
+    index = 0
+    with open('added_vocab.txt', "r", encoding="utf-8") as reader:
+        while True:
+            token = reader.readline()
+            if not token:
+                break
+            token = token.strip()
+            token = token.split()
+            vocab[token[0]] = index
+            index += 1
+    with open(vocab_file, "r", encoding="utf-8") as reader:
+        while True:
+            token = reader.readline()
+            if not token:
+                break
+            token = token.strip()
+            token = token.split()
+            vocab[token[0]] = index
+            index += 1
+    return vocab
+######
 
 
 def whitespace_tokenize(text):
@@ -82,7 +110,7 @@ class BertTokenizer(object):
                 "Can't find a vocabulary file at path '{}'. To load the vocabulary from a Google pretrained "
                 "model use `tokenizer = BertTokenizer.from_pretrained(PRETRAINED_MODEL_NAME)`".format(vocab_file))
         self.do_lower_case = do_lower_case
-        self.vocab = load_vocab(vocab_file)
+        self.vocab = load_vocab2(vocab_file)
         self.ids_to_tokens = collections.OrderedDict(
             [(ids, tok) for tok, ids in self.vocab.items()])
         self.basic_tokenizer = BasicTokenizer(do_lower_case=do_lower_case,
