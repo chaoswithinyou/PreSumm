@@ -84,8 +84,7 @@ def load_vocab2(vocab_file):
                 break
             token = token.strip()
             token = token.split()
-            vocab[token[0]] = index
-            index += 1
+            vocab[token[0]] = int(token[1])
     return vocab
 ######
 
