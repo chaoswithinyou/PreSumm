@@ -44,7 +44,7 @@ PRETRAINED_VOCAB_POSITIONAL_EMBEDDINGS_SIZE_MAP = {
     'bert-base-multilingual-uncased': 512,
     'bert-base-multilingual-cased': 512,
     'bert-base-chinese': 512,
-    'vinai/phobert-base': 512,
+    'vinai/phobert-base': 256,
 }
 VOCAB_NAME = 'vocab.txt'
 
@@ -84,7 +84,18 @@ def load_vocab2(vocab_file):
                 break
             token = token.strip()
             token = token.split()
-            vocab[token[0]] = int(token[1])
+            vocab[token[0]] = index
+            index += 1
+    last_1 = list(vocab.keys())[-1]
+    last_2 = list(vocab.keys())[-2]
+    last_3 = list(vocab.keys())[-3]
+    vocab['[unused0]'] = vocab[last_3]
+    vocab['[unused1]'] = vocab[last_2]
+    vocab['[unused2]'] = vocab[last_1]
+    del vocab[last_1]
+    del vocab[last_2]
+    del vocab[last_3]
+    vocab['[mask]'] = index
     return vocab
 ######
 
