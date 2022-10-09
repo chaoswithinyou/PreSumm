@@ -131,6 +131,14 @@ class Bert(nn.Module):
             self.model = DistilBertModel.from_pretrained('distilbert-base-uncased', cache_dir=temp_dir)
         elif other_bert == 'phobert':
             self.model = AutoModel.from_pretrained('vinai/phobert-base',cache_dir=temp_dir)
+            # Update config to finetune token type embeddings
+            self.model.config.type_vocab_size = 2 
+
+            # Create a new Embeddings layer, with 2 possible segments IDs instead of 1
+            self.model.embeddings.token_type_embeddings = nn.Embedding(2, self.model.config.hidden_size)
+                            
+            # Initialize it
+            self.model.embeddings.token_type_embeddings.weight.data.normal_(mean=0.0, std=self.model.config.initializer_range)
         ### End Modifying ###
 
         else:
