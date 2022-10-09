@@ -184,9 +184,9 @@ class ExtSummarizer(nn.Module):
             self.ext_layer = Classifier(self.bert.model.config.hidden_size)
 
         if(args.max_pos>256):
-            my_pos_embeddings = nn.Embedding(args.max_pos, self.bert.model.config.hidden_size)
-            my_pos_embeddings.weight.data[:256] = self.bert.model.embeddings.position_embeddings.weight.data
-            my_pos_embeddings.weight.data[256:] = self.bert.model.embeddings.position_embeddings.weight.data[-1][None,:].repeat(args.max_pos-256,1)
+            my_pos_embeddings = nn.Embedding(args.max_pos+2, self.bert.model.config.hidden_size)
+            my_pos_embeddings.weight.data[:258] = self.bert.model.embeddings.position_embeddings.weight.data
+            my_pos_embeddings.weight.data[258:] = self.bert.model.embeddings.position_embeddings.weight.data[-1][None,:].repeat(args.max_pos+2-258,1)
             self.bert.model.embeddings.position_embeddings = my_pos_embeddings
 
 
@@ -231,9 +231,9 @@ class AbsSummarizer(nn.Module):
             self.bert.model = BertModel(bert_config)
 
         if(args.max_pos>256):
-            my_pos_embeddings = nn.Embedding(args.max_pos, self.bert.model.config.hidden_size)
-            my_pos_embeddings.weight.data[:256] = self.bert.model.embeddings.position_embeddings.weight.data
-            my_pos_embeddings.weight.data[256:] = self.bert.model.embeddings.position_embeddings.weight.data[-1][None,:].repeat(args.max_pos-256,1)
+            my_pos_embeddings = nn.Embedding(args.max_pos+2, self.bert.model.config.hidden_size)
+            my_pos_embeddings.weight.data[:258] = self.bert.model.embeddings.position_embeddings.weight.data
+            my_pos_embeddings.weight.data[258:] = self.bert.model.embeddings.position_embeddings.weight.data[-1][None,:].repeat(args.max_pos+2-258,1)
             self.bert.model.embeddings.position_embeddings = my_pos_embeddings
         self.vocab_size = self.bert.model.config.vocab_size
         tgt_embeddings = nn.Embedding(self.vocab_size, self.bert.model.config.hidden_size, padding_idx=0)
