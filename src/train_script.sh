@@ -13,4 +13,4 @@ python train.py \
 -log_file ../logs/ext_bertbase_cnndm.log \
 -use_interval true \
 -warmup_steps 10000 \
--max_pos 512 \
+-max_pos 256 \
