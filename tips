@@ -1,0 +1,7 @@
+pip install git+https://github.com/huggingface/transformers
+
+python /home/lam/PreSumm/src/preprocess.py -mode format_to_bert -raw_path /home/lam/Downloads/json_data -save_path /home/lam/Downloads/bert_data  -lower -n_cpus 1 -log_file /home/lam/PreSumm/logs/preprocess.log
+
+python /content/PreSumm/src/train.py -other_bert phobert -task ext -mode train -bert_data_path /content/PreSumm/bert_data/cnndm_sample -model_path MODEL_PATH -lr 2e-3 -report_every 1 -save_checkpoint_steps 1000 -batch_size 3000 -train_steps 50000 -accum_count 2 -ext_dropout 0.1 -visible_gpus -1 -log_file /content/PreSumm/logs/ext_bert_cnndm -use_interval true -warmup_steps 10000 -max_pos 256
+
+python /content/PreSumm/src/train.py -other_bert phobert -task ext -mode train -bert_data_path /content/PreSumm/bert_data/cnndm_sample -model_path MODEL_PATH -lr 2e-3 -report_every 50 -save_checkpoint_steps 1000 -batch_size 3000 -train_steps 50000 -accum_count 2 -ext_dropout 0.1 -visible_gpus 0 -log_file /content/PreSumm/logs/ext_bert_cnndm -use_interval true -warmup_steps 10000 -max_pos 512
