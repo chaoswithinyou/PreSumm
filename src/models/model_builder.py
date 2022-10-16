@@ -173,21 +173,27 @@ class ExtSummarizer(nn.Module):
         super(ExtSummarizer, self).__init__()
         self.args = args
         self.device = device
-        self.bert = Bert(args.large, args.temp_dir, args.finetune_bert, args.other_bert) # Modified: Add `args.other_bert`
+        self.bert1 = Bert(args.large, args.temp_dir, args.finetune_bert, args.other_bert) # Modified: Add `args.other_bert`
+        self.bert2 = Bert(args.large, args.temp_dir, args.finetune_bert, args.other_bert) # Modified: Add `args.other_bert`
+        self.bert3 = Bert(args.large, args.temp_dir, args.finetune_bert, args.other_bert) # Modified: Add `args.other_bert`
+        self.bert4 = Bert(args.large, args.temp_dir, args.finetune_bert, args.other_bert) # Modified: Add `args.other_bert`
         self.ext_layer = ExtTransformerEncoder(self.bert.model.config.hidden_size, args.ext_ff_size, args.ext_heads,
                                                args.ext_dropout, args.ext_layers)
 
         if (args.encoder == 'baseline'):
             bert_config = BertConfig(self.bert.model.config.vocab_size, hidden_size=args.ext_hidden_size,
                                      num_hidden_layers=args.ext_layers, num_attention_heads=args.ext_heads, intermediate_size=args.ext_ff_size)
-            self.bert.model = BertModel(bert_config)
+            self.bert1.model = BertModel(bert_config)
+            self.bert2.model = BertModel(bert_config)
+            self.bert3.model = BertModel(bert_config)
+            self.bert4.model = BertModel(bert_config)
             self.ext_layer = Classifier(self.bert.model.config.hidden_size)
 
-        if(args.max_pos>256):
-            my_pos_embeddings = nn.Embedding(args.max_pos+2, self.bert.model.config.hidden_size)
-            my_pos_embeddings.weight.data[:258] = self.bert.model.embeddings.position_embeddings.weight.data
-            my_pos_embeddings.weight.data[258:] = self.bert.model.embeddings.position_embeddings.weight.data[-1][None,:].repeat(args.max_pos+2-258,1)
-            self.bert.model.embeddings.position_embeddings = my_pos_embeddings
+        # if(args.max_pos>256):
+        #     my_pos_embeddings = nn.Embedding(args.max_pos+2, self.bert.model.config.hidden_size)
+        #     my_pos_embeddings.weight.data[:258] = self.bert.model.embeddings.position_embeddings.weight.data
+        #     my_pos_embeddings.weight.data[258:] = self.bert.model.embeddings.position_embeddings.weight.data[-1][None,:].repeat(args.max_pos+2-258,1)
+        #     self.bert.model.embeddings.position_embeddings = my_pos_embeddings
 
 
         if checkpoint is not None:
@@ -204,7 +210,51 @@ class ExtSummarizer(nn.Module):
         self.to(device)
 
     def forward(self, src, segs, clss, mask_src, mask_cls):
-        top_vec = self.bert(src, segs, mask_src)
+        #scr 1,lendoc
+        lendoc = src[0].size()
+        for i in range():
+            if src[0,i] == 0:
+                if i < 256:
+                    itemp1 = i
+                    checkb1 = 1
+                if i < 512:
+                    itemp2 = i
+                    checkb2 = 1
+                if i < 768:
+                    itemp3 = i
+                    checkb3 = 1
+            if src[0,i] == 2:
+                if i <= 256:
+                    checkb1 = 0
+                if i <= 512:
+                    checkb2 = 0
+                if i <= 768:
+                    checkb3 = 0
+                if i > 256 and checkb1 == 1:
+                    ibert2 = itemp1
+                if i > 512 and checkb2 == 1:
+                    ibert3 = itemp2
+                if i > 768 and checkb3 == 1:
+                    ibert4 = itemp3
+        if lendoc <= 256:
+            top_vec1 = self.bert1(src, segs, mask_src)
+            top_vec = top_vec1
+        elif lendoc <= 512:
+            top_vec1 = self.bert1(src[:,:ibert2], segs[:,:ibert2], mask_src[:,:ibert2])
+            top_vec2 = self.bert2(src[:,ibert2:], segs[:,ibert2:], mask_src[:,ibert2:])
+            top_vec = torch.cat((top_vec1,top_vec2),1)
+        elif lendoc <= 768:
+            top_vec1 = self.bert1(src[:,:ibert2], segs[:,:ibert2], mask_src[:,:ibert2])
+            top_vec2 = self.bert2(src[:,ibert2:ibert3], segs[:,ibert2:ibert3], mask_src[:,ibert2:ibert3])
+            top_vec3 = self.bert3(src[:,ibert3:], segs[:,ibert3:], mask_src[:,ibert3:])
+            top_vec = torch.cat((top_vec1,top_vec2,top_vec3),1)
+        else:
+            top_vec1 = self.bert1(src[:,:ibert2], segs[:,:ibert2], mask_src[:,:ibert2])
+            top_vec2 = self.bert2(src[:,ibert2:ibert3], segs[:,ibert2:ibert3], mask_src[:,ibert2:ibert3])
+            top_vec3 = self.bert3(src[:,ibert3:ibert4], segs[:,ibert3:ibert4], mask_src[:,ibert3:ibert4])
+            top_vec4 = self.bert4(src[:,ibert4:], segs[:,ibert4:], mask_src[:,ibert4:])
+            top_vec = torch.cat((top_vec1,top_vec2,top_vec3,top_vec4),1)
+        #top vec 1, lendoc, 768
         sents_vec = top_vec[torch.arange(top_vec.size(0)).unsqueeze(1), clss]
         sents_vec = sents_vec * mask_cls[:, :, None].float()
         sent_scores = self.ext_layer(sents_vec, mask_cls).squeeze(-1)
