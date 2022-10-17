@@ -177,11 +177,11 @@ class ExtSummarizer(nn.Module):
         self.bert2 = Bert(args.large, args.temp_dir, args.finetune_bert, args.other_bert) # Modified: Add `args.other_bert`
         self.bert3 = Bert(args.large, args.temp_dir, args.finetune_bert, args.other_bert) # Modified: Add `args.other_bert`
         self.bert4 = Bert(args.large, args.temp_dir, args.finetune_bert, args.other_bert) # Modified: Add `args.other_bert`
-        self.ext_layer = ExtTransformerEncoder(self.bert.model.config.hidden_size, args.ext_ff_size, args.ext_heads,
+        self.ext_layer = ExtTransformerEncoder(self.bert1.model.config.hidden_size, args.ext_ff_size, args.ext_heads,
                                                args.ext_dropout, args.ext_layers)
 
         if (args.encoder == 'baseline'):
-            bert_config = BertConfig(self.bert.model.config.vocab_size, hidden_size=args.ext_hidden_size,
+            bert_config = BertConfig(self.bert1.model.config.vocab_size, hidden_size=args.ext_hidden_size,
                                      num_hidden_layers=args.ext_layers, num_attention_heads=args.ext_heads, intermediate_size=args.ext_ff_size)
             self.bert1.model = BertModel(bert_config)
             self.bert2.model = BertModel(bert_config)
@@ -211,55 +211,81 @@ class ExtSummarizer(nn.Module):
 
     def forward(self, src, segs, clss, mask_src, mask_cls):
         #scr 1,lendoc
-        lendoc = src[0].size()
-        for i in range():
+        lendoc = src[0].shape[0]
+        count = 0
+        isbert2 = 0
+        isbert3 = 0
+        isbert4 = 0
+        endbert = lendoc
+        numsen = 0
+        numsen_count = 1
+        for i in range(lendoc):
+            count += 1
             if src[0,i] == 0:
-                if i < 256:
-                    itemp1 = i
-                    checkb1 = 1
-                if i < 512:
-                    itemp2 = i
-                    checkb2 = 1
-                if i < 768:
-                    itemp3 = i
-                    checkb3 = 1
-            if src[0,i] == 2:
-                if i <= 256:
-                    checkb1 = 0
-                if i <= 512:
-                    checkb2 = 0
-                if i <= 768:
-                    checkb3 = 0
-                if i > 256 and checkb1 == 1:
-                    ibert2 = itemp1
-                if i > 512 and checkb2 == 1:
-                    ibert3 = itemp2
-                if i > 768 and checkb3 == 1:
-                    ibert4 = itemp3
-        if lendoc <= 256:
-            top_vec1 = self.bert1(src, segs, mask_src)
-            top_vec = top_vec1
-        elif lendoc <= 512:
+                istart = i
+                numsen += numsen_count
+            if src[0,i] == 0:
+                iend = i
+            if count == 256:
+                count = i-istart+1
+                if isbert2 == 0:
+                    ibert2 = istart
+                    isbert2 = 1
+                elif isbert3 == 0:
+                    ibert3 = istart
+                    isbert3 = 1
+                elif isbert4 == 0:
+                    ibert4 = istart
+                    isbert4 = 1
+                else:
+                    endbert = iend+1
+                    numsen_count = 0
+        # if lendoc <= 256:
+        #     top_vec1 = self.bert1(src, segs, mask_src)
+        #     top_vec = top_vec1
+        # elif lendoc <= 512:
+        #     top_vec1 = self.bert1(src[:,:ibert2], segs[:,:ibert2], mask_src[:,:ibert2])
+        #     top_vec2 = self.bert2(src[:,ibert2:], segs[:,ibert2:], mask_src[:,ibert2:])
+        #     top_vec = torch.cat((top_vec1,top_vec2),1)
+        # elif lendoc <= 768:
+        #     top_vec1 = self.bert1(src[:,:ibert2], segs[:,:ibert2], mask_src[:,:ibert2])
+        #     top_vec2 = self.bert2(src[:,ibert2:ibert3], segs[:,ibert2:ibert3], mask_src[:,ibert2:ibert3])
+        #     top_vec3 = self.bert3(src[:,ibert3:], segs[:,ibert3:], mask_src[:,ibert3:])
+        #     top_vec = torch.cat((top_vec1,top_vec2,top_vec3),1)
+        # else:
+        #     top_vec1 = self.bert1(src[:,:ibert2], segs[:,:ibert2], mask_src[:,:ibert2])
+        #     top_vec2 = self.bert2(src[:,ibert2:ibert3], segs[:,ibert2:ibert3], mask_src[:,ibert2:ibert3])
+        #     top_vec3 = self.bert3(src[:,ibert3:ibert4], segs[:,ibert3:ibert4], mask_src[:,ibert3:ibert4])
+        #     top_vec4 = self.bert4(src[:,ibert4:endbert], segs[:,ibert4:endbert], mask_src[:,ibert4:endbert])
+        #     top_vec = torch.cat((top_vec1,top_vec2,top_vec3,top_vec4),1)
+
+        if isbert4 == 1:            
             top_vec1 = self.bert1(src[:,:ibert2], segs[:,:ibert2], mask_src[:,:ibert2])
-            top_vec2 = self.bert2(src[:,ibert2:], segs[:,ibert2:], mask_src[:,ibert2:])
-            top_vec = torch.cat((top_vec1,top_vec2),1)
-        elif lendoc <= 768:
+            top_vec2 = self.bert2(src[:,ibert2:ibert3], segs[:,ibert2:ibert3], mask_src[:,ibert2:ibert3])
+            top_vec3 = self.bert3(src[:,ibert3:ibert4], segs[:,ibert3:ibert4], mask_src[:,ibert3:ibert4])
+            top_vec4 = self.bert4(src[:,ibert4:endbert], segs[:,ibert4:endbert], mask_src[:,ibert4:endbert])
+            top_vec = torch.cat((top_vec1,top_vec2,top_vec3,top_vec4),1)
+        elif isbert3 == 1:
             top_vec1 = self.bert1(src[:,:ibert2], segs[:,:ibert2], mask_src[:,:ibert2])
             top_vec2 = self.bert2(src[:,ibert2:ibert3], segs[:,ibert2:ibert3], mask_src[:,ibert2:ibert3])
             top_vec3 = self.bert3(src[:,ibert3:], segs[:,ibert3:], mask_src[:,ibert3:])
             top_vec = torch.cat((top_vec1,top_vec2,top_vec3),1)
-        else:
+        elif isbert2 == 1:
             top_vec1 = self.bert1(src[:,:ibert2], segs[:,:ibert2], mask_src[:,:ibert2])
-            top_vec2 = self.bert2(src[:,ibert2:ibert3], segs[:,ibert2:ibert3], mask_src[:,ibert2:ibert3])
-            top_vec3 = self.bert3(src[:,ibert3:ibert4], segs[:,ibert3:ibert4], mask_src[:,ibert3:ibert4])
-            top_vec4 = self.bert4(src[:,ibert4:], segs[:,ibert4:], mask_src[:,ibert4:])
-            top_vec = torch.cat((top_vec1,top_vec2,top_vec3,top_vec4),1)
+            top_vec2 = self.bert2(src[:,ibert2:], segs[:,ibert2:], mask_src[:,ibert2:])
+            top_vec = torch.cat((top_vec1,top_vec2),1)
+        else:
+            top_vec1 = self.bert1(src, segs, mask_src)
+            top_vec = top_vec1
         #top vec 1, lendoc, 768
-        sents_vec = top_vec[torch.arange(top_vec.size(0)).unsqueeze(1), clss]
-        sents_vec = sents_vec * mask_cls[:, :, None].float()
-        sent_scores = self.ext_layer(sents_vec, mask_cls).squeeze(-1)
-        return sent_scores, mask_cls
-
+        # print(clss[:,:numsen])
+        # print(numsen)
+        sents_vec = top_vec[torch.arange(top_vec.size(0)).unsqueeze(1), clss[:,:numsen]]
+        print(mask_cls[:, :numsen, None].size())
+        print(sents_vec.size())
+        sents_vec = sents_vec * mask_cls[:, :numsen, None].float()
+        sent_scores = self.ext_layer(sents_vec, mask_cls[:,:numsen]).squeeze(-1)
+        return sent_scores, mask_cls[:,:numsen], numsen
 
 class AbsSummarizer(nn.Module):
     def __init__(self, args, device, checkpoint=None, bert_from_extractive=None):
