@@ -224,7 +224,7 @@ class ExtSummarizer(nn.Module):
             if src[0,i] == 0:
                 istart = i
                 numsen += numsen_count
-            if src[0,i] == 0:
+            if src[0,i] == 2:
                 iend = i
             if count == 256:
                 count = i-istart+1
