@@ -187,7 +187,7 @@ class ExtSummarizer(nn.Module):
             self.bert2.model = BertModel(bert_config)
             self.bert3.model = BertModel(bert_config)
             self.bert4.model = BertModel(bert_config)
-            self.ext_layer = Classifier(self.bert.model.config.hidden_size)
+            self.ext_layer = Classifier(self.bert1.model.config.hidden_size)
 
         # if(args.max_pos>256):
         #     my_pos_embeddings = nn.Embedding(args.max_pos+2, self.bert.model.config.hidden_size)
@@ -218,14 +218,13 @@ class ExtSummarizer(nn.Module):
         isbert4 = 0
         endbert = lendoc
         numsen = 0
-        numsen_count = 1
         for i in range(lendoc):
             count += 1
             if src[0,i] == 0:
                 istart = i
-                numsen += numsen_count
             if src[0,i] == 2:
                 iend = i
+                numsen += 1
             if count == 256:
                 count = i-istart+1
                 if isbert2 == 0:
@@ -239,25 +238,7 @@ class ExtSummarizer(nn.Module):
                     isbert4 = 1
                 else:
                     endbert = iend+1
-                    numsen_count = 0
-        # if lendoc <= 256:
-        #     top_vec1 = self.bert1(src, segs, mask_src)
-        #     top_vec = top_vec1
-        # elif lendoc <= 512:
-        #     top_vec1 = self.bert1(src[:,:ibert2], segs[:,:ibert2], mask_src[:,:ibert2])
-        #     top_vec2 = self.bert2(src[:,ibert2:], segs[:,ibert2:], mask_src[:,ibert2:])
-        #     top_vec = torch.cat((top_vec1,top_vec2),1)
-        # elif lendoc <= 768:
-        #     top_vec1 = self.bert1(src[:,:ibert2], segs[:,:ibert2], mask_src[:,:ibert2])
-        #     top_vec2 = self.bert2(src[:,ibert2:ibert3], segs[:,ibert2:ibert3], mask_src[:,ibert2:ibert3])
-        #     top_vec3 = self.bert3(src[:,ibert3:], segs[:,ibert3:], mask_src[:,ibert3:])
-        #     top_vec = torch.cat((top_vec1,top_vec2,top_vec3),1)
-        # else:
-        #     top_vec1 = self.bert1(src[:,:ibert2], segs[:,:ibert2], mask_src[:,:ibert2])
-        #     top_vec2 = self.bert2(src[:,ibert2:ibert3], segs[:,ibert2:ibert3], mask_src[:,ibert2:ibert3])
-        #     top_vec3 = self.bert3(src[:,ibert3:ibert4], segs[:,ibert3:ibert4], mask_src[:,ibert3:ibert4])
-        #     top_vec4 = self.bert4(src[:,ibert4:endbert], segs[:,ibert4:endbert], mask_src[:,ibert4:endbert])
-        #     top_vec = torch.cat((top_vec1,top_vec2,top_vec3,top_vec4),1)
+                    break
 
         if isbert4 == 1:            
             top_vec1 = self.bert1(src[:,:ibert2], segs[:,:ibert2], mask_src[:,:ibert2])
@@ -278,11 +259,7 @@ class ExtSummarizer(nn.Module):
             top_vec1 = self.bert1(src, segs, mask_src)
             top_vec = top_vec1
         #top vec 1, lendoc, 768
-        # print(clss[:,:numsen])
-        # print(numsen)
         sents_vec = top_vec[torch.arange(top_vec.size(0)).unsqueeze(1), clss[:,:numsen]]
-        print(mask_cls[:, :numsen, None].size())
-        print(sents_vec.size())
         sents_vec = sents_vec * mask_cls[:, :numsen, None].float()
         sent_scores = self.ext_layer(sents_vec, mask_cls[:,:numsen]).squeeze(-1)
         return sent_scores, mask_cls[:,:numsen], numsen
