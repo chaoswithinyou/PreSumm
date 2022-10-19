@@ -131,7 +131,7 @@ class Bert(nn.Module):
             self.model = DistilBertModel.from_pretrained('distilbert-base-uncased', cache_dir=temp_dir)
         elif other_bert == 'phobert':
             #self.model = AutoModel.from_pretrained('vinai/phobert-base',cache_dir=temp_dir)
-            self.model = AutoModel.from_pretrained('/content/phobert-1024-100steps',cache_dir=temp_dir)
+            self.model = AutoModel.from_pretrained('/content/phobertmodel',cache_dir=temp_dir)
             # Update config to finetune token type embeddings
             self.model.config.type_vocab_size = 2 
 
