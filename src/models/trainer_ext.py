@@ -311,8 +311,12 @@ class Trainer(object):
 
             sent_scores, mask = self.model(src, segs, clss, mask, mask_cls)
 
-            loss = self.loss(sent_scores, labels.float())
-            loss = (loss * mask.float()).sum()
+            a0 = torch.where(labels==0)[0]
+            a1 = torch.where(labels==1)[0]
+            selected_training = torch.cat((a1,a0[torch.randperm(len(a0))[:len(a1)+1]]))
+
+            loss = self.loss(sent_scores[selected_training], labels[selected_training].float())
+            loss = (loss * mask[selected_training].float()).sum()
             (loss / loss.numel()).backward()
             # loss.div(float(normalization)).backward()
 
