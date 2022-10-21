@@ -314,7 +314,7 @@ class Trainer(object):
             a0 = torch.where(labels[0]==0)[0]
             a1 = torch.where(labels[0]==1)[0]
             selected_training = torch.cat((a1,a0[torch.randperm(len(a0))[:len(a1)+1]]))
-            
+
             mask = mask[0][selected_training]
             labels = labels[0][selected_training].float()
             sent_scores = sent_scores[0][selected_training]

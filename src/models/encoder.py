@@ -81,9 +81,10 @@ class ExtTransformerEncoder(nn.Module):
              for _ in range(num_inter_layers)])
         self.dropout = nn.Dropout(dropout)
         self.layer_norm = nn.LayerNorm(d_model, eps=1e-6)
-        self.prewo = nn.Linear(3*d_model, d_model, bias=True)
-        self.wo = nn.Linear(d_model, 1, bias=True)
+        self.prewo = nn.Linear(d_model, 384, bias=True)
+        self.wo = nn.Linear(384, 1, bias=True)
         self.sigmoid = nn.Sigmoid()
+        self.relu = nn.ReLU()
 
     def forward(self, top_vecs, mask):
         """ See :obj:`EncoderBase.forward()`"""
@@ -97,12 +98,11 @@ class ExtTransformerEncoder(nn.Module):
             x = self.transformer_inter[i](i, x, x, ~mask)  # all_sents * max_tokens * dim
 
         x = self.layer_norm(x)
-        for combins in combins:
-            
-        combin_sent_scores = self.sigmoid(self.wo(x))
-        combin_sent_scores = combin_sent_scores.squeeze(-1) * mask.float()
+        x = self.relu(self.prewo(x))
+        sent_scores = self.sigmoid(self.wo(x))
+        sent_scores = sent_scores.squeeze(-1) * mask.float()
 
-        return combin_sent_scores
+        return sent_scores
 
 # class ExtTransformerEncoder(nn.Module):
 #     def __init__(self, d_model, d_ff, heads, dropout, num_inter_layers=0):
