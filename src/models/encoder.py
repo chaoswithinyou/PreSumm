@@ -81,6 +81,7 @@ class ExtTransformerEncoder(nn.Module):
              for _ in range(num_inter_layers)])
         self.dropout = nn.Dropout(dropout)
         self.layer_norm = nn.LayerNorm(d_model, eps=1e-6)
+        self.prewo = nn.Linear(3*d_model, d_model, bias=True)
         self.wo = nn.Linear(d_model, 1, bias=True)
         self.sigmoid = nn.Sigmoid()
 
@@ -96,8 +97,43 @@ class ExtTransformerEncoder(nn.Module):
             x = self.transformer_inter[i](i, x, x, ~mask)  # all_sents * max_tokens * dim
 
         x = self.layer_norm(x)
-        sent_scores = self.sigmoid(self.wo(x))
-        sent_scores = sent_scores.squeeze(-1) * mask.float()
+        for combins in combins:
+            
+        combin_sent_scores = self.sigmoid(self.wo(x))
+        combin_sent_scores = combin_sent_scores.squeeze(-1) * mask.float()
 
-        return sent_scores
+        return combin_sent_scores
+
+# class ExtTransformerEncoder(nn.Module):
+#     def __init__(self, d_model, d_ff, heads, dropout, num_inter_layers=0):
+#         super(ExtTransformerEncoder, self).__init__()
+#         self.d_model = d_model
+#         self.num_inter_layers = num_inter_layers
+#         self.pos_emb = PositionalEncoding(dropout, d_model)
+#         self.transformer_inter = nn.ModuleList(
+#             [TransformerEncoderLayer(d_model, heads, d_ff, dropout)
+#              for _ in range(num_inter_layers)])
+#         self.dropout = nn.Dropout(dropout)
+#         self.layer_norm = nn.LayerNorm(d_model, eps=1e-6)
+#         self.wo = nn.Linear(d_model, 1, bias=True)
+#         self.sigmoid = nn.Sigmoid()
+
+#     def forward(self, top_vecs, mask):
+#         """ See :obj:`EncoderBase.forward()`"""
+
+#         batch_size, n_sents = top_vecs.size(0), top_vecs.size(1)
+#         pos_emb = self.pos_emb.pe[:, :n_sents]
+#         x = top_vecs * mask[:, :, None].float()
+#         x = x + pos_emb
+
+#         for i in range(self.num_inter_layers):
+#             x = self.transformer_inter[i](i, x, x, ~mask)  # all_sents * max_tokens * dim
+
+#         x = self.layer_norm(x)
+#         sent_scores = self.sigmoid(self.wo(x))
+#         sent_scores = sent_scores.squeeze(-1) * mask.float()
+
+#         return sent_scores
+
+    
 
